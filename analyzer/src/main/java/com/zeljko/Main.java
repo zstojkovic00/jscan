@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.zeljko.model.Class;
 import com.zeljko.parser.JavaProjectParser;
+import org.kie.api.KieServices;
+import org.kie.api.runtime.KieContainer;
+import org.kie.api.runtime.KieSession;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +34,16 @@ public class Main {
 
         List<Class> classes = new JavaProjectParser().scan(projectToScan);
         prettyPrint(classes);
+
+        KieServices ks = KieServices.Factory.get();
+        KieContainer kContainer = ks.getKieClasspathContainer();
+        KieSession kSession = kContainer.newKieSession("ksession-rules");
+
+        for (Class cls : classes) {
+            kSession.insert(cls);
+        }
+        kSession.fireAllRules();
+        kSession.dispose();
     }
 
     private static void prettyPrint(List<Class> classes) {

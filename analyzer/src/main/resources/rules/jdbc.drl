@@ -1,0 +1,76 @@
+package rules
+
+import com.zeljko.model.Class
+import com.zeljko.model.Method
+import com.zeljko.model.MethodCall
+import com.zeljko.model.ResourceVariable
+
+/*
+ * Pravilo 1, Resource Leak
+ *
+ * Gledamo da li postoji ResourceVariable, ako postoji proveravamo sledece:
+ *   1. Da li se nalazi u try-with-resources bloku
+ *   2. Da li ima eksplicitni poziv close()
+ *   3. Da li ima metoda kojoj se prosledjuje ResourceVariable kao argument
+ *
+ * Ako ima (3):
+ *   1. Proveriti da li ta metoda ima close() na odgovarajucem parametru
+ *   2. Proveriti da li ta metoda ima dalje pozive kojima prosledjuje taj parametar
+ *
+ *   Napomena: pratimo samo jedan nivo dubine metode, tj. direktne helper metode u istoj klasi.
+ *   Potpuna rekurzivna analiza bi zahtevala Java logiku van Droolsa sto je van opsega ovog rada.
+ *
+ * Ako nijedno od navedenog ne zatvara resurs -> Prijaviti LEAK
+ */
+rule "Resource Leak"
+when
+    $class : Class()
+    $method : Method() from $class.methods()
+    $var : ResourceVariable(isInTryWithResources() == false) from $method.localVariables()
+    not (MethodCall(calledOnVariable == $var.name(), name == "close") from $method.calls())
+    not (MethodCall(args contains $var.name()) from $method.calls())
+then
+    System.out.println("[RESOURCE LEAK] Resurs " + $var.name() + " nije nikada zatvoren u metodi " + $method.name() + " klase " + $class.name());
+end
+
+/*
+ * Pravilo 2, Potencijalni Resource Leak
+ *
+ * Gledamo da li postoji ResourceVariable, ako postoji proveravamo sledece:
+ *   1. Da li se nalazi u try-with-resources bloku
+ *   2. Da li ima eksplicitni poziv close() - ako ima, da li je u finally bloku?
+ *   3. Da li ima metoda kojoj se prosledjuje ResourceVariable kao argument
+ *      - ako ima, da li se ta metoda poziva iz finally bloka?
+ *
+ * Ako ima (3):
+ *   1. Proveriti da li ta metoda ima close() na odgovarajucem parametru
+ *   2. Proveriti da li ta metoda ima dalje pozive kojima prosledjuje taj parametar
+ *
+ *   Napomena: pratimo samo jedan nivo dubine metode.
+ *
+ *   Ako close() postoji ali nije unutar finally blokom -> Prijaviti POTENTIAL LEAK
+ */
+
+rule "Potencijalni Resource Leak, direktan close"
+when
+    $class : Class()
+    $method : Method() from $class.methods()
+    $var : ResourceVariable(isInTryWithResources() == false) from $method.localVariables()
+    MethodCall(calledOnVariable == $var.name(), name == "close", isInFinallyBlock() == false) from $method.calls()
+    not (MethodCall(calledOnVariable == $var.name(), name == "close", isInFinallyBlock() == true) from $method.calls())
+    not (MethodCall(args contains $var.name(), isInFinallyBlock() == true) from $method.calls())
+then
+    System.err.println("[POTENTIAL LEAK] Resurs " + $var.name() + " se zatvara van finally bloka u metodi " + $method.name() + " klase " + $class.name());
+end
+
+rule "Potencijalni Resource Leak, helper van finally"
+when
+    $class : Class()
+    $method : Method() from $class.methods()
+    $var : ResourceVariable(isInTryWithResources() == false) from $method.localVariables()
+    MethodCall(args contains $var.name(), isInFinallyBlock() == false) from $method.calls()
+    not (MethodCall(calledOnVariable == $var.name(), name == "close", isInFinallyBlock() == true) from $method.calls())
+    not (MethodCall(args contains $var.name(), isInFinallyBlock() == true) from $method.calls())
+then
+    System.err.println("[POTENTIAL LEAK] Resurs " + $var.name() + " se zatvara van finally bloka u metodi " + $method.name() + " klase " + $class.name());
+end

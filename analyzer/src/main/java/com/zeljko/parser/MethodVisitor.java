@@ -42,7 +42,8 @@ public class MethodVisitor {
                                 .orElse(null),
                         call.getArguments().stream()
                                 .map(Objects::toString)
-                                .toList()
+                                .toList(),
+                        isInFinallyBlock(call)
                 ))
                 .toList();
 
@@ -63,5 +64,24 @@ public class MethodVisitor {
                 .flatMap(Node::getParentNode)
                 .filter(p -> p instanceof TryStmt)
                 .isPresent();
+    }
+
+    /* TryStmt
+        tryBlock
+            finallyBlock
+                ExpressionStmt
+                    MethodCallExpr example; ps.close()
+     */
+    private boolean isInFinallyBlock(MethodCallExpr call) {
+        Node current = call.getParentNode().orElse(null);
+        while (current != null) {
+            if (current instanceof TryStmt tryStmt) {
+                if (tryStmt.getFinallyBlock().filter(fb -> fb.isAncestorOf(call)).isPresent()) {
+                    return true;
+                }
+            }
+            current = current.getParentNode().orElse(null);
+        }
+        return false;
     }
 }
