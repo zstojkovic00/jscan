@@ -1,0 +1,97 @@
+package rules
+
+import com.zeljko.model.Class
+import com.zeljko.model.Method
+import com.zeljko.model.MethodCall
+import com.zeljko.model.ResourceVariable
+
+declare TransactionStarted
+    className   : String
+    methodName  : String
+    connVarName : String
+end
+
+declare TransactionInProgress
+    className  : String
+    methodName : String
+end
+
+declare MissingCommit
+    className  : String
+    methodName : String
+end
+
+declare MissingRollback
+    className  : String
+    methodName : String
+end
+
+
+rule "Detektuj setAutoCommit, tj da je manuelno upravljanje transakcijama"
+when
+    $class  : Class()
+    $method : Method() from $class.methods()
+    $call   : MethodCall(name == "setAutoCommit", args contains "false") from $method.calls()
+    not TransactionStarted(className == $class.name(), methodName == $method.name())
+then
+    insert(new TransactionStarted($class.name(), $method.name(), $call.calledOnVariable()));
+end
+
+
+rule "Detektuj DML operacije"
+when
+    $ts     : TransactionStarted($className : className, $methodName : methodName)
+    $class  : Class(name == $className)
+    $method : Method(name == $methodName) from $class.methods()
+    MethodCall(name in ("executeUpdate", "executeQuery", "execute", "executeBatch")) from $method.calls()
+    not TransactionInProgress(className == $className, methodName == $methodName)
+then
+    insert(new TransactionInProgress($className, $methodName));
+end
+
+
+rule "Zakljuci da nedostaje commit"
+when
+    $tip    : TransactionInProgress($className : className, $methodName : methodName)
+    $class  : Class(name == $className)
+    $method : Method(name == $methodName) from $class.methods()
+    not MethodCall(name == "commit") from $method.calls()
+then
+    insert(new MissingCommit($className, $methodName));
+end
+
+
+rule "Zakljuci da nedostaje rollback"
+when
+    $tip    : TransactionInProgress($className : className, $methodName : methodName)
+    $class  : Class(name == $className)
+    $method : Method(name == $methodName) from $class.methods()
+    not MethodCall(name == "rollback") from $method.calls()
+then
+    insert(new MissingRollback($className, $methodName));
+end
+
+
+rule "Prijavi da nema ni commit-a ni rollback-a"
+when
+    $mc : MissingCommit($className : className, $methodName : methodName)
+    MissingRollback(className == $className, methodName == $methodName)
+then
+    System.out.println("[TRANSACTION PROBLEM] Nema commit() ni rollback() u metodi " + $methodName + " klase " + $className);
+end
+
+rule "Prijavi da nema commit-a"
+when
+    $mc : MissingCommit($className : className, $methodName : methodName)
+    not MissingRollback(className == $className, methodName == $methodName)
+then
+    System.out.println("[TRANSACTION PROBLEM] Nema commit() u metodi " + $methodName + " klase " + $className);
+end
+
+rule "Prijavi da nema rollback-a"
+when
+    $mr : MissingRollback($className : className, $methodName : methodName)
+    not MissingCommit(className == $className, methodName == $methodName)
+then
+    System.out.println("[TRANSACTION PROBLEM] Nema rollback() u metodi " + $methodName + " klase " + $className);
+end
