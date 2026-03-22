@@ -14,6 +14,10 @@ import java.util.Objects;
 public class MethodVisitor {
 
     public Method visit(MethodDeclaration method) {
+        int lineCount = method.getRange()
+                .map(r -> r.end.line - r.begin.line + 1)
+                .orElse(0);
+
         List<Variable> params = method.getParameters().stream()
                 .map(p -> toVariable(
                         p.getNameAsString(),
@@ -47,7 +51,7 @@ public class MethodVisitor {
                 ))
                 .toList();
 
-        return new Method(method.getNameAsString(), method.getTypeAsString(), params, localVariables, calls);
+        return new Method(method.getNameAsString(), method.getTypeAsString(), lineCount, params, localVariables, calls);
     }
 
     private Variable toVariable(String name, String type, String value, boolean isInTryWithResources) {
@@ -66,12 +70,6 @@ public class MethodVisitor {
                 .isPresent();
     }
 
-    /* TryStmt
-        tryBlock
-            finallyBlock
-                ExpressionStmt
-                    MethodCallExpr example; ps.close()
-     */
     private boolean isInFinallyBlock(MethodCallExpr call) {
         Node current = call.getParentNode().orElse(null);
         while (current != null) {

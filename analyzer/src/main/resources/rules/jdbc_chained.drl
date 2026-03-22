@@ -27,7 +27,7 @@ declare MissingRollback
 end
 
 
-rule "Detektuj setAutoCommit, tj da je manuelno upravljanje transakcijama"
+rule "Detektuj setAutoCommit - manuelno upravljanje transakcijama"
 when
     $class  : Class()
     $method : Method() from $class.methods()

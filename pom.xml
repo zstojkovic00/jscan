@@ -10,7 +10,9 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>parser</module>
         <module>analyzer</module>
+        <module>linter</module>
         <module>dummy-project</module>
     </modules>
 
@@ -19,6 +21,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <drools.version>7.73.0.Final</drools.version>
+        <jfuzzy.version>3.0</jfuzzy.version>
     </properties>
 
 </project>

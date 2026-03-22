@@ -1,0 +1,65 @@
+FUNCTION_BLOCK methodComplexity
+
+VAR_INPUT
+    methodLength : REAL;
+    paramsCount   : REAL;
+    callCount    : REAL;
+END_VAR
+
+VAR_OUTPUT
+    complexityRisk : REAL;
+END_VAR
+
+FUZZIFY methodLength
+    TERM short    := (0, 1) (15, 1) (25, 0);
+    TERM medium   := TRIAN 15 30 50;
+    TERM long     := TRIAN 40 60 90;
+    TERM veryLong := (80, 0) (100, 1) (200, 1);
+END_FUZZIFY
+
+FUZZIFY paramCount
+    TERM few      := (0, 1) (2, 1) (4, 0);
+    TERM moderate := TRIAN 2 4 7;
+    TERM many     := (5, 0) (7, 1) (15, 1);
+END_FUZZIFY
+
+FUZZIFY callCount
+    TERM few      := (0, 1) (4, 1) (8, 0);
+    TERM moderate := TRIAN 4 10 18;
+    TERM many     := (14, 0) (20, 1) (50, 1);
+END_FUZZIFY
+
+DEFUZZIFY complexityRisk
+    TERM low      := (0, 1) (20, 1) (35, 0);
+    TERM medium   := TRIAN 25 50 65;
+    TERM high     := TRIAN 55 72 85;
+    TERM critical := (78, 0) (90, 1) (100, 1);
+
+    METHOD : COG;
+    DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK rules
+    AND : MIN;
+    ACT : MIN;
+    ACCU : MAX;
+
+    RULE 1  : IF methodLength IS short    AND paramCount IS few      THEN complexityRisk IS low;
+    RULE 2  : IF methodLength IS short    AND paramCount IS moderate THEN complexityRisk IS low;
+    RULE 3  : IF methodLength IS short    AND paramCount IS many     THEN complexityRisk IS medium;
+    RULE 4  : IF methodLength IS medium   AND paramCount IS few      THEN complexityRisk IS low;
+    RULE 5  : IF methodLength IS medium   AND paramCount IS moderate THEN complexityRisk IS medium;
+    RULE 6  : IF methodLength IS medium   AND paramCount IS many     THEN complexityRisk IS high;
+    RULE 7  : IF methodLength IS long     AND paramCount IS few      THEN complexityRisk IS medium;
+    RULE 8  : IF methodLength IS long     AND paramCount IS moderate THEN complexityRisk IS high;
+    RULE 9  : IF methodLength IS long     AND paramCount IS many     THEN complexityRisk IS critical;
+    RULE 10 : IF methodLength IS veryLong                            THEN complexityRisk IS critical;
+    RULE 11 : IF callCount IS few         AND methodLength IS short  THEN complexityRisk IS low;
+    RULE 12 : IF callCount IS moderate    AND methodLength IS medium THEN complexityRisk IS medium;
+    RULE 13 : IF callCount IS many        AND methodLength IS medium THEN complexityRisk IS high;
+    RULE 14 : IF callCount IS many        AND methodLength IS long   THEN complexityRisk IS critical;
+    RULE 15 : IF callCount IS many        AND paramCount IS many     THEN complexityRisk IS critical;
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK

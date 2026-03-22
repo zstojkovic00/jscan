@@ -5,6 +5,10 @@
     <file url="file://$PROJECT_DIR$/analyzer/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/dummy-project/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/dummy-project/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linter/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/linter/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/parser/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/parser/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
