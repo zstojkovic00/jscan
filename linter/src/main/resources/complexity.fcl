@@ -2,7 +2,7 @@ FUNCTION_BLOCK methodComplexity
 
 VAR_INPUT
     methodLength : REAL;
-    paramsCount   : REAL;
+    paramCount   : REAL;
     callCount    : REAL;
 END_VAR
 
