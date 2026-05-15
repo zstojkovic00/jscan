@@ -6,6 +6,7 @@ import com.zeljko.model.Class;
 import com.zeljko.model.Method;
 import com.zeljko.parser.JavaProjectParser;
 import net.sourceforge.jFuzzyLogic.FIS;
+import net.sourceforge.jFuzzyLogic.plot.JFuzzyChart;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,19 +45,18 @@ public class Main {
                 fis.setVariable("methodLength", method.lineCount());
                 fis.setVariable("paramCount", paramCount);
                 fis.setVariable("callCount", callCount);
+                fis.setVariable("nestingDepth", method.nestingDepth());
                 fis.evaluate();
 
                 double risk = fis.getVariable("complexityRisk").defuzzify();
 
                 System.out.println("[COMPLEXITY] " + cls.name() + "." + method.name()
-                        + " (lines=" + method.lineCount() + ", params=" + paramCount + ", calls=" + callCount + ")"
+                        + " (lines=" + method.lineCount() + ", params=" + paramCount + ", calls=" + callCount + ", nesting=" + method.nestingDepth() + ")"
                         + " -> risk=" + String.format("%.1f", risk) + " (" + riskLabel(risk) + ")");
             }
         }
-
-        /*for (Rule r : fis.getFunctionBlock("methodComplexity").getFuzzyRuleBlock("rules")) {
-            System.out.println(r);
-        }*/
+        
+        JFuzzyChart.get().chart(fis);
     }
 
     private static String riskLabel(double risk) {

@@ -5,6 +5,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
+
 import com.github.javaparser.ast.stmt.TryStmt;
 import com.zeljko.model.*;
 
@@ -17,6 +18,8 @@ public class MethodVisitor {
         int lineCount = method.getRange()
                 .map(r -> r.end.line - r.begin.line + 1)
                 .orElse(0);
+
+        int nestingDepth = new NestingDepthVisitor().calculate(method);
 
         List<Variable> params = method.getParameters().stream()
                 .map(p -> toVariable(
@@ -51,7 +54,7 @@ public class MethodVisitor {
                 ))
                 .toList();
 
-        return new Method(method.getNameAsString(), method.getTypeAsString(), lineCount, params, localVariables, calls);
+        return new Method(method.getNameAsString(), method.getTypeAsString(), lineCount, nestingDepth, params, localVariables, calls);
     }
 
     private Variable toVariable(String name, String type, String value, boolean isInTryWithResources) {
