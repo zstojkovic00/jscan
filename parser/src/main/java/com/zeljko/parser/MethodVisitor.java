@@ -54,7 +54,7 @@ public class MethodVisitor {
                 ))
                 .toList();
 
-        return new Method(method.getNameAsString(), method.getTypeAsString(), lineCount, nestingDepth, params, localVariables, calls);
+        return new Method(method.getNameAsString(), method.getTypeAsString(), lineCount, nestingDepth, method.toString(), params, localVariables, calls);
     }
 
     private Variable toVariable(String name, String type, String value, boolean isInTryWithResources) {

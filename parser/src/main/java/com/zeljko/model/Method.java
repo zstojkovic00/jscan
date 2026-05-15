@@ -7,6 +7,7 @@ public record Method(
         String returnType,
         int lineCount,
         int nestingDepth,
+        String sourceCode,
         List<Variable> parameters,
         List<Variable> localVariables,
         List<MethodCall> calls

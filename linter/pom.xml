@@ -19,6 +19,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.zeljko</groupId>
+            <artifactId>html-report</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>net.sourceforge.jFuzzyLogic</groupId>
             <artifactId>jFuzzyLogic</artifactId>
             <version>${jfuzzy.version}</version>

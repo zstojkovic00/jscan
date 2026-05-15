@@ -5,11 +5,18 @@ import com.google.gson.GsonBuilder;
 import com.zeljko.model.Class;
 import com.zeljko.model.Method;
 import com.zeljko.parser.JavaProjectParser;
+import com.zeljko.report.HtmlReporter;
+import com.zeljko.report.MethodResult;
 import net.sourceforge.jFuzzyLogic.FIS;
-import net.sourceforge.jFuzzyLogic.plot.JFuzzyChart;
+
+import com.zeljko.report.RuleDictionary;
+import net.sourceforge.jFuzzyLogic.rule.Rule;
+import net.sourceforge.jFuzzyLogic.rule.RuleBlock;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Main {
@@ -33,9 +40,11 @@ public class Main {
         }
 
         List<Class> classes = new JavaProjectParser().scan(projectToScan);
-        prettyPrint(classes);
+//        prettyPrint(classes);
 
         FIS fis = FIS.load(Main.class.getResourceAsStream("/complexity.fcl"), false);
+
+        List<MethodResult> results = new ArrayList<>();
 
         for (Class cls : classes) {
             for (Method method : cls.methods()) {
@@ -48,15 +57,32 @@ public class Main {
                 fis.setVariable("nestingDepth", method.nestingDepth());
                 fis.evaluate();
 
-                double risk = fis.getVariable("complexityRisk").defuzzify();
+                double score = fis.getVariable("complexityRisk").defuzzify();
+                String risk = riskLabel(score);
 
-                System.out.println("[COMPLEXITY] " + cls.name() + "." + method.name()
-                        + " (lines=" + method.lineCount() + ", params=" + paramCount + ", calls=" + callCount + ", nesting=" + method.nestingDepth() + ")"
-                        + " -> risk=" + String.format("%.1f", risk) + " (" + riskLabel(risk) + ")");
+                List<String> firedRules = new ArrayList<>();
+                RuleBlock rb = fis.getFunctionBlock("methodComplexity").getFuzzyRuleBlock("rules");
+                for (Rule rule : rb) {
+                    if (rule.getDegreeOfSupport() > 0) {
+                        firedRules.add(RuleDictionary.translate(rule.toString()));
+                    }
+                }
+
+//                System.out.println("[COMPLEXITY] " + cls.name() + "." + method.name()
+//                        + " (lines=" + method.lineCount() + ", params=" + paramCount + ", calls=" + callCount + ", nesting=" + method.nestingDepth() + ")"
+//                        + " -> risk=" + String.format("%.1f", score) + " (" + risk + ")");
+
+                results.add(new MethodResult(cls.name(), method.name(), method.lineCount(), paramCount, callCount, method.nestingDepth(), method.sourceCode(), score, risk, firedRules));
             }
         }
-        
-        JFuzzyChart.get().chart(fis);
+
+        results.sort(Comparator.comparingDouble(MethodResult::score).reversed());
+        double averageScore = results.stream().mapToDouble(MethodResult::score).average().orElse(0);
+
+        Path report = projectToScan.resolve("report.html");
+        new HtmlReporter().write(results, averageScore, report);
+        System.out.println("Report: " + report.toAbsolutePath());
+//        JFuzzyChart.get().chart(fis);
     }
 
     private static String riskLabel(double risk) {

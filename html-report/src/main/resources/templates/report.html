@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>code quality report</title>
+    <link rel="stylesheet" href="report.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"> <!-- code syntax highlighting -->
+</head>
+<body>
+
+<h1>Code Quality Report</h1>
+<p class="subtitle" th:text="${results.size()} + ' methods analyzed, project score: ' + ${score}">methods analyzed</p>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:24px"></th>
+            <th>Method</th>
+            <th>Lines</th>
+            <th>Params</th>
+            <th>Calls</th>
+            <th>Nesting</th>
+            <th>Score</th>
+            <th>Risk</th>
+        </tr>
+    </thead>
+    <tbody>
+        <th:block th:each="r, i : ${results}"> <!-- thymeleaf petlja, results je MethodResult, r je trenutni element-->
+
+            <tr class="main" th:data-id="|d${i.index}|" onclick="toggle(this)"> <!-- red na koji moze da se klikne, data-id=d0, d1, etc.. -->
+                <td><span class="chevron">&#9658;</span></td>
+                <td>
+                    <div class="method" th:text="${r.methodName}"></div>
+                    <div class="cls"    th:text="${r.className}"></div>
+                </td>
+                <td th:text="${r.lineCount}"></td>
+                <td th:text="${r.paramCount}"></td>
+                <td th:text="${r.callCount}"></td>
+                <td th:text="${r.nestingDepth}"></td>
+                <td class="score" th:text="${#numbers.formatDecimal(r.score, 1, 0)}"></td>
+                <td><span class="risk" th:classappend="${r.risk}" th:text="${r.risk}"></span></td>
+            </tr>
+
+            <tr class="detail">
+                <td colspan="8">
+                    <div class="detail-inner" th:id="|d${i.index}|">
+                        <pre><code class="language-java" th:text="${r.sourceCode}"></code></pre>
+                        <div class="advice">
+                            <b>Aktivirana fuzzy pravila:</b>
+                            <ul>
+                                <li class="rule" th:each="rule : ${r.firedRules}" th:text="${rule}"></li>
+                            </ul>
+
+                            <span th:if="${r.score >= 55}">
+                                <b>Preporuka:</b> razmotri refaktorisanje metode na osnovu aktiviranih pravila navedenih iznad.
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+        </th:block>
+    </tbody>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<script>
+    hljs.highlightAll();
+
+    function toggle(row) {
+        const open = !row.classList.contains('open');
+        row.classList.toggle('open', open);
+        document.getElementById(row.dataset.id).classList.toggle('visible', open);
+    }
+</script>
+
+</body>
+</html>
