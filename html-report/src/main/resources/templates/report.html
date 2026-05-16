@@ -54,6 +54,11 @@
                             <span th:if="${r.score >= 55}">
                                 <b>Preporuka:</b> razmotri refaktorisanje metode na osnovu aktiviranih pravila navedenih iznad.
                             </span>
+
+                            <div th:if="${r.chart != null}" style="margin-top: 16px;">
+                                <b>Agregirana fuzzy oblast (COG defazifikacija):</b><br>
+                                <img th:src="|data:image/png;base64,${r.chart}|" style="margin-top: 8px; max-width: 100%;">
+                            </div>
                         </div>
                     </div>
                 </td>

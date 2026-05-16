@@ -12,7 +12,14 @@ import net.sourceforge.jFuzzyLogic.FIS;
 import com.zeljko.report.RuleDictionary;
 import net.sourceforge.jFuzzyLogic.rule.Rule;
 import net.sourceforge.jFuzzyLogic.rule.RuleBlock;
+import net.sourceforge.jFuzzyLogic.rule.Variable;
+import org.jfree.chart.JFreeChart;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,14 +64,15 @@ public class Main {
                 fis.setVariable("nestingDepth", method.nestingDepth());
                 fis.evaluate();
 
-                double score = fis.getVariable("complexityRisk").defuzzify();
+                Variable complexityRisk = fis.getVariable("complexityRisk");
+                double score = complexityRisk.getLatestDefuzzifiedValue();
                 String risk = riskLabel(score);
 
                 List<String> firedRules = new ArrayList<>();
                 RuleBlock rb = fis.getFunctionBlock("methodComplexity").getFuzzyRuleBlock("rules");
                 for (Rule rule : rb) {
                     if (rule.getDegreeOfSupport() > 0) {
-                        firedRules.add(RuleDictionary.translate(rule.toString()));
+                        firedRules.add(RuleDictionary.translate(rule.toString(), rule.getDegreeOfSupport()));
                     }
                 }
 
@@ -72,7 +80,31 @@ public class Main {
 //                        + " (lines=" + method.lineCount() + ", params=" + paramCount + ", calls=" + callCount + ", nesting=" + method.nestingDepth() + ")"
 //                        + " -> risk=" + String.format("%.1f", score) + " (" + risk + ")");
 
-                results.add(new MethodResult(cls.name(), method.name(), method.lineCount(), paramCount, callCount, method.nestingDepth(), method.sourceCode(), score, risk, firedRules));
+
+                JFuzzyChartImpl jFuzzyChart = new JFuzzyChartImpl();
+                JFreeChart jFreeChart = jFuzzyChart.chart(
+                        complexityRisk,
+                        complexityRisk.getDefuzzifier()
+                );
+
+                BufferedImage image = jFreeChart.createBufferedImage(800, 300);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(image, "png", baos);
+                String chart = Base64.getEncoder().encodeToString(baos.toByteArray());
+
+                results.add(new MethodResult(
+                        cls.name(),
+                        method.name(),
+                        method.lineCount(),
+                        paramCount,
+                        callCount,
+                        method.nestingDepth(),
+                        method.sourceCode(),
+                        score,
+                        risk,
+                        firedRules,
+                        chart
+                ));
             }
         }
 
@@ -82,7 +114,6 @@ public class Main {
         Path report = projectToScan.resolve("report.html");
         new HtmlReporter().write(results, averageScore, report);
         System.out.println("Report: " + report.toAbsolutePath());
-//        JFuzzyChart.get().chart(fis);
     }
 
     private static String riskLabel(double risk) {

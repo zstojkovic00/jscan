@@ -55,24 +55,30 @@ RULEBLOCK rules
     RULE 1  : IF methodLength IS short    AND paramCount IS few      THEN complexityRisk IS low;
     RULE 2  : IF methodLength IS short    AND paramCount IS moderate THEN complexityRisk IS low;
     RULE 3  : IF methodLength IS short    AND paramCount IS many     THEN complexityRisk IS medium;
+
     RULE 4  : IF methodLength IS medium   AND paramCount IS few      THEN complexityRisk IS low;
     RULE 5  : IF methodLength IS medium   AND paramCount IS moderate THEN complexityRisk IS medium;
     RULE 6  : IF methodLength IS medium   AND paramCount IS many     THEN complexityRisk IS high;
+
     RULE 7  : IF methodLength IS long     AND paramCount IS few      THEN complexityRisk IS medium;
     RULE 8  : IF methodLength IS long     AND paramCount IS moderate THEN complexityRisk IS high;
     RULE 9  : IF methodLength IS long     AND paramCount IS many     THEN complexityRisk IS critical;
-    RULE 10 : IF methodLength IS veryLong                            THEN complexityRisk IS critical;
+    RULE 10 : IF methodLength IS veryLong OR nestingDepth IS arrowCode THEN complexityRisk IS critical;
+
     RULE 11 : IF callCount IS few         AND methodLength IS short  THEN complexityRisk IS low;
     RULE 12 : IF callCount IS moderate    AND methodLength IS medium THEN complexityRisk IS medium;
     RULE 13 : IF callCount IS many        AND methodLength IS medium THEN complexityRisk IS high;
     RULE 14 : IF callCount IS many        AND methodLength IS long   THEN complexityRisk IS critical;
     RULE 15 : IF callCount IS many        AND paramCount IS many     THEN complexityRisk IS critical;
+
     RULE 16 : IF nestingDepth IS flat                                THEN complexityRisk IS low;
     RULE 17 : IF nestingDepth IS moderate AND methodLength IS short  THEN complexityRisk IS low;
     RULE 18 : IF nestingDepth IS moderate AND methodLength IS medium THEN complexityRisk IS medium;
     RULE 19 : IF nestingDepth IS deep     AND methodLength IS medium THEN complexityRisk IS high;
-    RULE 20 : IF nestingDepth IS deep     AND paramCount IS many     THEN complexityRisk IS critical;
-    RULE 21 : IF nestingDepth IS arrowCode                           THEN complexityRisk IS critical;
+    RULE 20 : IF nestingDepth IS deep     AND NOT paramCount IS few  THEN complexityRisk IS critical;
+
+    RULE 21 : IF methodLength IS very long AND nestingDepth IS moderate THEN complexityRisk IS high;
+    RULE 22 : IF methodLength IS long AND paramCount IS few AND callCount IS many THEN complexityRisk IS high;
 
 END_RULEBLOCK
 

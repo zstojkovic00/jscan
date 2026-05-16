@@ -12,5 +12,6 @@ public record MethodResult(
         String sourceCode,
         double score,
         String risk,
-        List<String> firedRules
+        List<String> firedRules,
+        String chart
 ) {}
